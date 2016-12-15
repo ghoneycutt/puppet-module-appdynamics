@@ -26,6 +26,11 @@ env:
 
 sudo: false
 
+before_install:
+  - gem update --system
+  - gem update bundler
+  - gem --version
+
 script: 'SPEC_OPTS="--format documentation" bundle exec rake $CHECK'
 
 # only do rubocop tests with the newest version of ruby so that we are
