@@ -143,19 +143,20 @@ describe 'appdynamics' do
         :name    => %w(manage_libaio manage_gcc),
         :valid   => [true, 'true', false, 'false'],
         :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42],
-        :message => 'Error while evaluating',
+        :message => '(is not a boolean|Unknown type of boolean given)',
       },
       'integers' => {
         :name    => %w(iio_port server_port admin_port jms_port database_port ssl_port reporting_service_http_port reporting_service_https_port elasticsearch_port install_timeout),
         :valid   => [23],
         :invalid => [true, %w(array), { 'ha' => 'sh' }, 2.42], # validate_integer() accepts integers as strings.
-        :message => 'Error while evaluating',
+        :message => 'Expected .* to be an Integer',
       },
+      # Downgrade for Puppet 3.x: remove fixnum and float from invalid list
       'strings' => {
         :name    => %w(server_hostname language mysql_root_password username password root_user_password exec_path),
         :valid   => ['string'],
-        :invalid => [true, %w(array), { 'ha' => 'sh' }, 3, 2.42],
-        :message => 'Error while evaluating',
+        :invalid => [true, %w(array), { 'ha' => 'sh' }],
+        :message => 'is not a string',
       },
       'regex for controller_config' => {
         :name    => %w(controller_config),
