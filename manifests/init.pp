@@ -13,20 +13,19 @@ class appdynamics (
   $language                     = 'en',
   $jms_port                     = '7676',
   $install_dir                  = '/home/appduser/AppDynamics/Controller',
-  $mysql_root_password          = 'DRvYYv9eq6',
+  $mysql_root_password          = 'changeme',
   $database_port                = '3388',
   $username                     = 'admin',
-  $password                     = 'pa55word',
+  $password                     = 'changeme',
   $ssl_port                     = '8181',
   $real_datadir                 = '/home/appduser/AppDynamics/Controller/db/data',
   $elasticsearch_datadir        = '/home/appduser/AppDynamics/Controller/events_service/analytics-processor',
-  $root_user_password           = 'pa55word2',
+  $root_user_password           = 'changeme',
   $reporting_service_http_port  = '8020',
   $reporting_service_https_port = '8021',
   $elasticsearch_port           = '9200',
   $manage_libaio                = true,
   $manage_gcc                   = true,
-  $manage_unzip                 = true,
   $install_timeout              = 900,
   $exec_path                    = '/bin:/usr/bin:/sbin:/usr/sbin',
 ) {
@@ -56,7 +55,6 @@ class appdynamics (
   validate_string($elasticsearch_port)
   validate_bool($manage_libaio)
   validate_bool($manage_gcc)
-  validate_bool($manage_unzip)
   validate_integer($install_timeout)
   validate_string($exec_path)
 
@@ -74,55 +72,48 @@ class appdynamics (
     }
   }
 
-  if $manage_unzip == true {
-    package { 'unzip':
-      ensure => installed,
-      before => Exec['install_ha_toolkit'],
-    }
-  }
-
   File_line {
     before => Exec['install_controller'],
   }
 
-  file_line { 'appd hard nofile':
+  file_line { 'appd_hard_nofile':
     path => '/etc/security/limits.conf',
     line => 'appd hard nofile 65535',
   }
 
-  file_line { 'appd soft nofile':
+  file_line { 'appd_soft_nofile':
     path => '/etc/security/limits.conf',
     line => 'appd soft nofile 65535',
   }
 
-  file_line { 'appd hard nproc':
+  file_line { 'appd_hard_nproc':
     path => '/etc/security/limits.conf',
     line => 'appd hard nproc 8192',
   }
 
-  file_line { 'appd soft nproc':
+  file_line { 'appd_soft_nproc':
     path => '/etc/security/limits.conf',
     line => 'appd soft nproc 8192',
   }
 
-  file_line { 'ulimit config 1':
+  file_line { 'appd_ulimit_1':
     path => '/etc/profile',
     line => 'ulimit -n 65535',
   }
 
-  file_line { 'ulimit config 2':
+  file_line { 'appd_ulimit_2':
     path => '/etc/profile',
     line => 'ulimit -u 8192',
   }
 
-  file_line { 'pam configuration':
+  file_line { 'appd_pam_system-auth':
     path => '/etc/pam.d/system-auth',
     line => 'session required pam_limits.so',
   }
 
-  file { 'appdynamics_response':
+  file { 'appdynamics_installer_response':
     ensure  => 'file',
-    path    => '/opt/response.varfile',
+    path    => '/tmp/response.varfile',
     content => template('appdynamics/response.varfile.erb'),
     owner   => 'root',
     group   => 'root',
@@ -131,7 +122,7 @@ class appdynamics (
   }
 
   exec { 'install_controller':
-    command   => "sh ${controller_install_path} -q -varfile /opt/response.varfile",
+    command   => "sh ${controller_install_path} -q -varfile /tmp/response.varfile",
     creates   => '/home/appduser/AppDynamics/Controller',
     logoutput => true,
     timeout   => $install_timeout,
@@ -164,7 +155,7 @@ class appdynamics (
   }
 
   service { 'appdcontroller':
-    ensure     => running,
+    ensure     => 'running',
     enable     => true,
     hasrestart => true,
     hasstatus  => true,
