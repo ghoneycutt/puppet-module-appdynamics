@@ -83,13 +83,22 @@ describe 'appdynamics' do
     end
 
     it do
+      should contain_exec('install_appd_license').with({
+        :command => 'mv /tmp/license.lic /home/appduser/AppDynamics/Controller/license.lic',
+        :creates => '/home/appduser/AppDynamics/Controller/license.lic',
+        :path    => '/bin:/usr/bin:/sbin:/usr/sbin',
+        :require => 'Exec[install_controller]',
+      })
+    end
+
+    it do
       should contain_file('appdynamics_license').with({
         :ensure  => 'file',
         :path    => '/home/appduser/AppDynamics/Controller/license.lic',
         :owner   => 'root',
         :group   => 'root',
         :mode    => '0644',
-        :require => 'Exec[install_controller]',
+        :require => 'Exec[install_appd_license]',
       })
     end
 

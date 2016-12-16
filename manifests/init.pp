@@ -3,6 +3,7 @@
 class appdynamics (
   $controller_install_path      = '/tmp/controller.sh',
   $ha_toolkit_path              = '/tmp/HA-toolkit.tar.gz',
+  $license_path                 = '/tmp/license.lic',
   $controller_config            = 'demo',
   $iio_port                     = '3700',
   $server_port                  = '8090',
@@ -32,6 +33,7 @@ class appdynamics (
 
   validate_absolute_path($controller_install_path)
   validate_absolute_path($ha_toolkit_path)
+  validate_absolute_path($license_path)
   validate_re($controller_config, '^demo$|^small$|^medium$|^large$|^extra-large$', 'The controller config must be set to demo, small, medium, large, or extra-large')
   validate_string($iio_port)
   validate_string($server_port)
@@ -129,14 +131,20 @@ class appdynamics (
     path      => $exec_path,
   }
 
+  exec { 'install_appd_license':
+    command => "mv ${license_path} ${install_dir}/license.lic",
+    creates => "${install_dir}/license.lic",
+    path    => $exec_path,
+    require => Exec['install_controller'],
+  }
+
   file { 'appdynamics_license':
     ensure  => 'file',
     path    => "${install_dir}/license.lic",
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    #source  => 'puppet:///modules/appdynamics/license.lic',
-    require => Exec['install_controller'],
+    require => Exec['install_appd_license'],
   }
 
   exec { 'install_ha_toolkit':
