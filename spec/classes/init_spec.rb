@@ -130,4 +130,72 @@ describe 'appdynamics' do
       })
     end
   end
+
+  describe 'parameter type and content validations' do
+    validations = {
+      'absolute paths' => {
+        :name    => %w(controller_install_path ha_toolkit_path license_path install_dir real_datadir elasticsearch_datadir),
+        :valid   => ['/absolute/path'],
+        :invalid => ['not/an/absolute/path'],
+        :message => 'is not an absolute path',
+      },
+      'booleans' => {
+        :name    => %w(manage_libaio manage_gcc),
+        :valid   => [true, 'true', false, 'false'],
+        :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42],
+        :message => 'Error while evaluating',
+      },
+      'integers' => {
+        :name    => %w(iio_port server_port admin_port jms_port database_port ssl_port reporting_service_http_port reporting_service_https_port elasticsearch_port install_timeout),
+        :valid   => [23],
+        :invalid => [true, %w(array), { 'ha' => 'sh' }, 2.42], # validate_integer() accepts integers as strings.
+        :message => 'Error while evaluating',
+      },
+      'strings' => {
+        :name    => %w(server_hostname language mysql_root_password username password root_user_password exec_path),
+        :valid   => ['string'],
+        :invalid => [true, %w(array), { 'ha' => 'sh' }, 3, 2.42],
+        :message => 'Error while evaluating',
+      },
+      'regex for controller_config' => {
+        :name    => %w(controller_config),
+        :valid   => %w(demo small medium large extra-large),
+        :invalid => ['extra-extra'],
+        :message => "appdynamics::controller_config is <.*> and valid values are 'demo', 'small', 'medium', 'large' and 'extra-large'",
+      },
+      'regex for ha_controller_type' => {
+        :name    => %w(ha_controller_type),
+        :valid   => %w(notapplicable primary secondary),
+        :invalid => ['extra-extra'],
+        :message => "appdynamics::ha_controller_type is <.*> and valid values are 'notapplicable', 'primary' and 'secondary'",
+      },
+      'regex for controller_tenancy_mode' => {
+        :name    => %w(controller_tenancy_mode),
+        :valid   => %w(single multi),
+        :invalid => ['extra-extra'],
+        :message => "appdynamics::controller_tenancy_mode is <.*> and valid values are 'single' and 'multi'",
+      },
+    }
+
+    validations.sort.each do |type, var|
+      var[:name].each do |var_name|
+        var[:params] = {} if var[:params].nil?
+        var[:valid].each do |valid|
+          context "when #{var_name} (#{type}) is set to valid #{valid} (as #{valid.class})" do
+            let(:params) { [var[:params], { :"#{var_name}" => valid, }].reduce(:merge) }
+            it { should compile }
+          end
+        end
+
+        var[:invalid].each do |invalid|
+          context "when #{var_name} (#{type}) is set to invalid #{invalid} (as #{invalid.class})" do
+            let(:params) { [var[:params], { :"#{var_name}" => invalid, }].reduce(:merge) }
+            it 'should fail' do
+              expect { should contain_class(subject) }.to raise_error(Puppet::Error, /#{var[:message]}/)
+            end
+          end
+        end
+      end # var[:name].each
+    end # validations.sort.each
+  end # describe 'parameter type content validations'
 end
