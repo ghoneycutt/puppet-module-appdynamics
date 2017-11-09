@@ -42,7 +42,7 @@ puppet module install kinneygroup-appdynamics
 To perform a basic appdynamics installation, declare the appdynamics class.
 
 ```puppet
-include appdynamics
+include ::appdynamics
 ```
 
 ## Usage
@@ -50,7 +50,7 @@ include appdynamics
 ### Basic install
 
 ```puppet
-class { 'appdynamics':
+class { '::appdynamics':
   password                => 'pa55word',
   controller_install_path => '/opt/appdynamics/controller.sh',
   ha_toolkit_path         => '/opt/appdynamics/ha-toolkit.tar.gz',
@@ -75,7 +75,7 @@ The appdynamics module comes with a number of options to interface with appdynam
 
 * appdynamics: The main class
 
-###Parameters
+## Parameters
 
 ### `controller_install_path`
 
